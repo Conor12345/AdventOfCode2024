@@ -78,7 +78,7 @@ int main()
     std::vector<ListItem> list_1;
     std::vector<ListItem> list_2;
 
-    number_lists = readTwoNumberListFile("test_input.txt");
+    number_lists = readTwoNumberListFile("full_input.txt");
 
     for (int item : number_lists.at(0))
     {
