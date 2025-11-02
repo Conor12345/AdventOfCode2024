@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <cmath>
 
 void print2dVector(std::vector<std::vector<char>> vector)
 {
@@ -42,23 +43,95 @@ std::string concatenateWordSearch(std::vector<std::vector<char>> word_search)
 {
     std::string concatenated_search;
 
+    // Horizontal
     for (std::vector<char> row : word_search)
     {
         for (char letter : row)
         {
             concatenated_search += letter;
         }
+        concatenated_search += "_";
     }
 
+    concatenated_search += "__";
+
+    // Vertical
     for (int col_index = 0; col_index < word_search[0].size(); col_index++)
     {
         for (int row_index = 0; row_index < word_search.size(); row_index++)
         {
             concatenated_search += word_search[row_index][col_index];
         }
+        concatenated_search += "_";
     }
 
-    // TODO: Add diagonal rows
+    concatenated_search += "__";
+
+    int x = 0;
+    int y = 0;
+
+    int width = word_search[0].size();
+    int height = word_search.size();
+    int diagonal_rows = std::sqrt(width * width + height * height);
+
+    std::cout << diagonal_rows << std::endl;
+
+    // Diagonals starting in top left
+    for (int row_num = 0; row_num < width; row_num++)
+    {
+        x = 0;
+        y = row_num;
+        while (y >= 0)
+        {
+            concatenated_search += word_search[y][x];
+            x++;
+            y--;
+        }
+        concatenated_search += "_";
+    }
+
+    for (int row_num = 1; row_num < width; row_num++)
+    {
+        x = row_num;
+        y = height - 1;
+
+        while (x < width)
+        {
+            concatenated_search += word_search[y][x];
+            x++;
+            y--;
+        }
+        concatenated_search += "_";
+    }
+
+    concatenated_search += "__";
+
+    // Diagonals starting in top right
+    for (int row_num = 0; row_num < width; row_num++)
+    {
+        x = width - 1 - row_num;
+        y = 0;
+        while (x < width)
+        {
+            concatenated_search += word_search[y][x];
+            x++;
+            y++;
+        }
+        concatenated_search += "_";
+    }
+
+    for (int row_num = 1; row_num < width; row_num++)
+    {
+        x = 0;
+        y = row_num;
+        while (y < height)
+        {
+            concatenated_search += word_search[y][x];
+            x++;
+            y++;
+        }
+        concatenated_search += "_";
+    }
 
     return concatenated_search;
 }
@@ -102,7 +175,7 @@ int countXMAS(std::vector<std::vector<char>> word_search)
 
 int main()
 {
-    std::vector<std::vector<char>> word_search = readFile2dCharVector("test_input_simple.txt");
+    std::vector<std::vector<char>> word_search = readFile2dCharVector("full_input.txt");
 
     print2dVector(word_search);
 
