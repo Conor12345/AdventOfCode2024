@@ -99,6 +99,27 @@ bool isLogSafe(std::vector<int> log)
     return isListItemDiffInRange(log, 1, 3);
 }
 
+bool checkLogSafeWithMissingItem(std::vector<int> log)
+{
+    if (isLogSafe(log))
+    {
+        return true;
+    }
+
+    std::vector<int> missing_item_log;
+    for (int removal_index = 0; removal_index < log.size(); removal_index++)
+    {
+        missing_item_log = log;
+        missing_item_log.erase(missing_item_log.begin() + removal_index);
+        if (isLogSafe(missing_item_log))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 int main()
 {
     std::vector<std::vector<int>> logs = readSpaceSeparatedIntLogs("full_input.txt");
@@ -112,4 +133,14 @@ int main()
         }
     }
     std::cout << "Safe log count: " << safe_log_count << std::endl;
+
+    int missing_item_safe_log_count = 0;
+    for (std::vector<int> log : logs)
+    {
+        if (checkLogSafeWithMissingItem(log))
+        {
+            missing_item_safe_log_count += 1;
+        }
+    }
+    std::cout << "Missing Item Safe log count: " << missing_item_safe_log_count << std::endl;
 }
