@@ -69,16 +69,10 @@ int findSmallestItemIndex(std::vector<ListItem> list)
     return currentSmallestItemIndex;
 }
 
-int main()
+int calculateTotalDistance(std::vector<std::vector<int>> number_lists, bool print_debug = false)
 {
-    std::string line_in_buffer;
-
-    std::vector<std::vector<int>> number_lists;
-
     std::vector<ListItem> list_1;
     std::vector<ListItem> list_2;
-
-    number_lists = readTwoNumberListFile("full_input.txt");
 
     for (int item : number_lists.at(0))
     {
@@ -107,11 +101,54 @@ int main()
         list_1.at(list_1_index).itemHasBeenCounted = true;
         list_2.at(list_2_index).itemHasBeenCounted = true;
 
-        std::cout << "List 1 Index: " << list_1_index << "\t\t" << "List 2 Index: " << list_2_index << "\t\t" << "Current Total: " << total_distance << std::endl;
+        if (print_debug)
+        {
+            std::cout << "List 1 Index: " << list_1_index << "\t\t" << "List 2 Index: " << list_2_index << "\t\t" << "Current Total: " << total_distance << std::endl;
 
-        printListStates(list_1, list_2);
+            printListStates(list_1, list_2);
+        }
     }
 
-    std::cout << std::endl
-              << total_distance << std::endl;
+    return total_distance;
+}
+
+int countItemOccurences(std::vector<int> list, int search_item)
+{
+    int count = 0;
+    for (int item : list)
+    {
+        if (item == search_item)
+        {
+            count += 1;
+        }
+    }
+    return count;
+}
+
+int calculateSimilarityScore(std::vector<std::vector<int>> number_lists, bool print_debug = false)
+{
+    std::vector<int> list_1 = number_lists.at(0);
+    std::vector<int> list_2 = number_lists.at(1);
+
+    int similarity_score = 0;
+
+    for (int item : list_1)
+    {
+        similarity_score += item * countItemOccurences(list_2, item);
+    }
+
+    return similarity_score;
+}
+
+int main()
+{
+    std::vector<std::vector<int>> number_lists = readTwoNumberListFile("full_input.txt");
+
+    int total_distance = calculateTotalDistance(number_lists);
+
+    std::cout << "Total Distance: " << total_distance << std::endl;
+
+    int similarity_score = calculateSimilarityScore(number_lists);
+
+    std::cout << "Total Similarity: " << similarity_score << std::endl;
 }
