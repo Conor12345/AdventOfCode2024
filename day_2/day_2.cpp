@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 
 std::vector<std::vector<int>> readSpaceSeparatedIntLogs(std::string filename)
 {
@@ -52,8 +53,63 @@ void printLogs(std::vector<std::vector<int>> logs)
     std::cout << std::endl;
 }
 
+bool isListIncreasingOnly(std::vector<int> list)
+{
+    for (int index = 0; index < list.size() - 1; index++)
+    {
+        if (list.at(index) > list.at(index + 1))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool isListItemDiffInRange(std::vector<int> list, int min_diff, int max_diff)
+{
+    for (int index = 0; index < list.size() - 1; index++)
+    {
+        int diff = abs(list[index] - list[index + 1]);
+        if ((diff < min_diff) || (diff > max_diff))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool isLogSafe(std::vector<int> log)
+{
+    bool all_increasing_or_decreasing;
+    if (log[1] > log[0])
+    {
+        all_increasing_or_decreasing = isListIncreasingOnly(log);
+    }
+    else
+    {
+        std::vector<int> reversed_log = log;
+        std::reverse(reversed_log.begin(), reversed_log.end());
+
+        all_increasing_or_decreasing = isListIncreasingOnly(reversed_log);
+    }
+    if (!all_increasing_or_decreasing)
+    {
+        return false;
+    }
+    return isListItemDiffInRange(log, 1, 3);
+}
+
 int main()
 {
-    std::vector<std::vector<int>> logs = readSpaceSeparatedIntLogs("test_input.txt");
-    printLogs(logs);
+    std::vector<std::vector<int>> logs = readSpaceSeparatedIntLogs("full_input.txt");
+    int safe_log_count = 0;
+
+    for (std::vector<int> log : logs)
+    {
+        if (isLogSafe(log))
+        {
+            safe_log_count += 1;
+        }
+    }
+    std::cout << "Safe log count: " << safe_log_count << std::endl;
 }
