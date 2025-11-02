@@ -102,7 +102,7 @@ int main()
         list_1_index = findSmallestItemIndex(list_1);
         list_2_index = findSmallestItemIndex(list_2);
 
-        total_distance += std::abs(list_1_index - list_2_index);
+        total_distance += std::abs(list_1[list_1_index].item - list_2[list_2_index].item);
 
         list_1.at(list_1_index).itemHasBeenCounted = true;
         list_2.at(list_2_index).itemHasBeenCounted = true;
