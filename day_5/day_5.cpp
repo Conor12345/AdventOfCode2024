@@ -4,6 +4,7 @@
 #include <vector>
 #include <tuple>
 #include <sstream>
+#include <algorithm>
 
 struct PageRule
 {
@@ -92,9 +93,67 @@ InstructionData readInstructionsFromFile(std::string filename)
     return instructions;
 }
 
+bool isItemInList(std::vector<int> list, int item)
+{
+    return std::find(list.begin(), list.end(), item) != list.end();
+}
+
+bool isPageRuleFollowed(std::vector<int> page_list, PageRule rule)
+{
+    std::vector<int>::iterator first_location = std::find(page_list.begin(), page_list.end(), rule.first);
+    std::vector<int>::iterator second_location = std::find(page_list.begin(), page_list.end(), rule.second);
+
+    if (first_location == page_list.end() || second_location == page_list.end())
+    {
+        return true;
+    }
+
+    if (std::distance(page_list.begin(), first_location) < std::distance(page_list.begin(), second_location))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool isPageListValid(std::vector<int> page_list, std::vector<PageRule> page_rules)
+{
+    for (PageRule rule : page_rules)
+    {
+        if (!isPageRuleFollowed(page_list, rule))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+int returnMiddlePage(std::vector<int> page_list)
+{
+    int middle_page = page_list.size() / 2;
+    return page_list[middle_page];
+}
+
+int sumValidMiddlePages(InstructionData data)
+{
+    int sum = 0;
+    for (std::vector<int> page_list : data.page_lists)
+    {
+        if (isPageListValid(page_list, data.page_rules))
+        {
+            sum += returnMiddlePage(page_list);
+        }
+    }
+    return sum;
+}
+
 int main()
 {
-    InstructionData complete_instructions = readInstructionsFromFile("test_input.txt");
+    InstructionData complete_instructions = readInstructionsFromFile("full_input.txt");
 
     logInstructionData(complete_instructions);
+
+    int valid_list_middle_page_sum = sumValidMiddlePages(complete_instructions);
+
+    std::cout << "Sum: " << valid_list_middle_page_sum << std::endl;
 }
