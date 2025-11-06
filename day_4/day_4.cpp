@@ -173,6 +173,74 @@ int countXMAS(std::vector<std::vector<char>> word_search)
     return count;
 }
 
+bool isCrossMAS(std::vector<std::vector<char>> word_search, int row_num, int col_num)
+{
+    char top_left = word_search[row_num - 1][col_num - 1];
+    char top_right = word_search[row_num - 1][col_num + 1];
+    char bottom_left = word_search[row_num + 1][col_num - 1];
+    char bottom_right = word_search[row_num + 1][col_num + 1];
+
+    // M X S
+    // X A X
+    // M X S
+    if (top_left == 'M' && bottom_left == 'M' && top_right == 'S' && bottom_right == 'S')
+    {
+        return true;
+    }
+
+    // S X M
+    // X A X
+    // S X M
+    if (top_left == 'S' && bottom_left == 'S' && top_right == 'M' && bottom_right == 'M')
+    {
+        return true;
+    }
+
+    // M X M
+    // X A X
+    // S X S
+    if (top_left == 'S' && bottom_left == 'M' && top_right == 'S' && bottom_right == 'M')
+    {
+        return true;
+    }
+
+    // S X S
+    // X A X
+    // M X M
+    if (top_left == 'M' && bottom_left == 'S' && top_right == 'M' && bottom_right == 'S')
+    {
+        return true;
+    }
+
+    // std::cout << top_left << " " << top_right << std::endl;
+    // std::cout << " A " << std::endl;
+    // std::cout << bottom_left << " " << bottom_right << std::endl;
+
+    // std::cout << "Failed" << std::endl;
+
+    return false;
+}
+
+int countCrossMAS(std::vector<std::vector<char>> word_search)
+{
+    int count = 0;
+    for (int row = 1; row < word_search.size() - 1; row++)
+    {
+        for (int col = 1; col < word_search[row].size() - 1; col++)
+        {
+            if (word_search[row][col] == 'A')
+            {
+                if (isCrossMAS(word_search, row, col))
+                {
+                    count++;
+                }
+            }
+        }
+    }
+
+    return count;
+}
+
 int main()
 {
     std::vector<std::vector<char>> word_search = readFile2dCharVector("full_input.txt");
@@ -182,4 +250,8 @@ int main()
     int XMAS_count = countXMAS(word_search);
 
     std::cout << "XMAS Count: " << XMAS_count << std::endl;
+
+    int cross_MAS_count = countCrossMAS(word_search);
+
+    std::cout << "X-MAS Count: " << cross_MAS_count << std::endl;
 }
