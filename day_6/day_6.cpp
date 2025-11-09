@@ -4,17 +4,67 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <unordered_map>
 
 struct Position
 {
     int x;
     int y;
+
+    Position() {}
+    Position(int x, int y)
+    {
+        this->x = x;
+        this->y = y;
+    }
+
+    bool operator==(const Position &otherPos) const
+    {
+        if (this->x == otherPos.x && this->y == otherPos.y)
+            return true;
+        else
+            return false;
+    }
+
+    struct HashFunction
+    {
+        size_t operator()(const Position &pos) const
+        {
+            size_t xHash = std::hash<int>()(pos.x);
+            size_t yHash = std::hash<int>()(pos.y) << 1;
+            return xHash ^ yHash;
+        }
+    };
 };
+
+bool operator==(const Position &lhs, const Position &rhs)
+{
+    if (lhs.x != rhs.x)
+    {
+        return false;
+    }
+    if (lhs.y != rhs.y)
+    {
+        return false;
+    }
+
+    return true;
+}
 
 struct VisitedPostion
 {
     Position position;
     char orientation;
+
+    struct HashFunction
+    {
+        size_t operator()(const VisitedPostion &visPos) const
+        {
+            size_t positionHash = Position::HashFunction()(visPos.position);
+            size_t orientationHash = std::hash<int>()(visPos.orientation) << 1;
+            return positionHash ^ orientationHash;
+        }
+    };
 };
 
 bool operator==(const VisitedPostion &lhs, const VisitedPostion &rhs)
@@ -269,23 +319,23 @@ bool GuardTracker::doesLayoutLoop()
     const int MAX_CYCLE_COUNT = 10000;
     int cycle_count = 0;
 
-    std::vector<VisitedPostion> visited_postions;
+    std::unordered_map<VisitedPostion, bool, VisitedPostion::HashFunction> visited_positions;
     findGuardLocation();
 
     while (updateGuardLocation())
     {
-        VisitedPostion last_visited;
-        last_visited.position = current_postion;
-        last_visited.orientation = map[current_postion.y][current_postion.x];
+        VisitedPostion current_visited;
+        current_visited.position = current_postion;
+        current_visited.orientation = map[current_postion.y][current_postion.x];
 
-        if (std::find(visited_postions.begin(), visited_postions.end(), last_visited) != visited_postions.end())
+        if (visited_positions.find(current_visited) != visited_positions.end())
         {
             std::cout << "Exiting early after " << cycle_count << " iterations." << std::endl;
             logMap();
             return true;
         }
 
-        visited_postions.push_back(last_visited);
+        visited_positions[current_visited] = true;
 
         cycle_count++;
         if (cycle_count > MAX_CYCLE_COUNT)
