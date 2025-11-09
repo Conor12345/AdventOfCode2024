@@ -3,12 +3,36 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 
 struct GuardPosition
 {
     int x;
     int y;
 };
+
+struct VisitedPostion
+{
+    GuardPosition position;
+    char orientation;
+};
+
+bool operator==(const VisitedPostion &lhs, const VisitedPostion &rhs)
+{
+    if (lhs.position.x != rhs.position.x)
+    {
+        return false;
+    }
+    if (lhs.position.y != rhs.position.y)
+    {
+        return false;
+    }
+    if (lhs.orientation != rhs.orientation)
+    {
+        return false;
+    }
+    return true;
+}
 
 class GuardTracker
 {
@@ -115,8 +139,6 @@ bool GuardTracker::isGuardPositionInMap(GuardPosition position)
 
 bool GuardTracker::updateGuardLocation()
 {
-    findGuardLocation();
-
     GuardPosition nextPosition = findNextGuardPosition();
 
     if (!isGuardPositionInMap(nextPosition))
@@ -130,6 +152,7 @@ bool GuardTracker::updateGuardLocation()
     {
         map[nextPosition.y][nextPosition.x] = map[current_postion.y][current_postion.x];
         map[current_postion.y][current_postion.x] = VISITED;
+        current_postion = nextPosition;
         return true;
     }
 
@@ -195,12 +218,16 @@ int GuardTracker::countVisitedLocations()
 
 int GuardTracker::countLoopingLayouts(std::string filename)
 {
+    readMapFromFile(filename);
+    std::vector<std::vector<char>> map_cache = map;
+
     int count = 0;
     for (int row = 0; row < map.size(); row++)
     {
         for (int col = 0; col < map[row].size(); col++)
         {
-            readMapFromFile(filename);
+            std::cout << row << "\t" << col << std::endl;
+            map = map_cache;
             if (map[row][col] != EMPTY)
             {
                 continue;
@@ -220,8 +247,24 @@ bool GuardTracker::doesLayoutLoop()
     const int MAX_CYCLE_COUNT = 10000;
     int cycle_count = 0;
 
+    std::vector<VisitedPostion> visited_postions;
+    findGuardLocation();
+
     while (updateGuardLocation())
     {
+        VisitedPostion last_visited;
+        last_visited.position = current_postion;
+        last_visited.orientation = map[current_postion.y][current_postion.x];
+
+        if (std::find(visited_postions.begin(), visited_postions.end(), last_visited) != visited_postions.end())
+        {
+            std::cout << "Exiting early after " << cycle_count << " iterations." << std::endl;
+            logMap();
+            return true;
+        }
+
+        visited_postions.push_back(last_visited);
+
         cycle_count++;
         if (cycle_count > MAX_CYCLE_COUNT)
         {
@@ -234,6 +277,7 @@ bool GuardTracker::doesLayoutLoop()
 
 void GuardTracker::execute()
 {
+    findGuardLocation();
     while (updateGuardLocation())
     {
         // logMap();
@@ -243,7 +287,7 @@ void GuardTracker::execute()
 
 int main()
 {
-    std::string filename = "full_input.txt";
+    std::string filename = "test_input.txt";
 
     GuardTracker guard_tracker;
     guard_tracker.readMapFromFile(filename);
