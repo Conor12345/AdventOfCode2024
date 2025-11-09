@@ -5,7 +5,7 @@
 #include <sstream>
 #include <algorithm>
 
-struct GuardPosition
+struct Position
 {
     int x;
     int y;
@@ -13,7 +13,7 @@ struct GuardPosition
 
 struct VisitedPostion
 {
-    GuardPosition position;
+    Position position;
     char orientation;
 };
 
@@ -44,16 +44,17 @@ public:
     int countLoopingLayouts(std::string);
 
 private:
-    GuardPosition findNextGuardPosition();
-    bool isGuardPositionInMap(GuardPosition);
+    Position findNextPosition();
+    bool isPositionInMap(Position);
     void findGuardLocation();
     bool updateGuardLocation();
     char rotateGuard(char);
     bool doesLayoutLoop();
+    std::vector<Position> findVisitedLocations();
 
     std::vector<std::vector<char>> map;
 
-    GuardPosition current_postion;
+    Position current_postion;
 
     const char EMPTY = '.';
     const char VISITED = 'X';
@@ -97,10 +98,10 @@ void GuardTracker::logMap()
     std::cout << std::endl;
 }
 
-GuardPosition GuardTracker::findNextGuardPosition()
+Position GuardTracker::findNextPosition()
 {
     char guard = map[current_postion.y][current_postion.x];
-    GuardPosition next;
+    Position next;
     if (guard == UPWARDS)
     {
         next.x = current_postion.x;
@@ -124,7 +125,7 @@ GuardPosition GuardTracker::findNextGuardPosition()
     return next;
 }
 
-bool GuardTracker::isGuardPositionInMap(GuardPosition position)
+bool GuardTracker::isPositionInMap(Position position)
 {
     if (position.x < 0 || position.x >= map[0].size())
     {
@@ -139,9 +140,9 @@ bool GuardTracker::isGuardPositionInMap(GuardPosition position)
 
 bool GuardTracker::updateGuardLocation()
 {
-    GuardPosition nextPosition = findNextGuardPosition();
+    Position nextPosition = findNextPosition();
 
-    if (!isGuardPositionInMap(nextPosition))
+    if (!isPositionInMap(nextPosition))
     {
         map[current_postion.y][current_postion.x] = VISITED;
         return false;
@@ -216,29 +217,50 @@ int GuardTracker::countVisitedLocations()
     return count;
 }
 
+std::vector<Position> GuardTracker::findVisitedLocations()
+{
+    std::vector<Position> positions;
+    Position position;
+    for (int row = 0; row < map.size(); row++)
+    {
+        for (int col = 0; col < map[row].size(); col++)
+        {
+            if (map[row][col] == VISITED)
+            {
+                position.x = col;
+                position.y = row;
+                positions.push_back(position);
+            }
+        }
+    }
+    return positions;
+}
+
 int GuardTracker::countLoopingLayouts(std::string filename)
 {
     readMapFromFile(filename);
     std::vector<std::vector<char>> map_cache = map;
 
+    execute();
+
+    std::vector<Position> visited_positions = findVisitedLocations();
+
     int count = 0;
-    for (int row = 0; row < map.size(); row++)
+    for (Position position : visited_positions)
     {
-        for (int col = 0; col < map[row].size(); col++)
+        std::cout << position.x << "\t" << position.y << std::endl;
+        map = map_cache;
+        if (map[position.y][position.x] != EMPTY)
         {
-            std::cout << row << "\t" << col << std::endl;
-            map = map_cache;
-            if (map[row][col] != EMPTY)
-            {
-                continue;
-            }
-            map[row][col] = OBSTRUCTION;
-            if (doesLayoutLoop())
-            {
-                count++;
-            }
+            continue;
+        }
+        map[position.y][position.x] = OBSTRUCTION;
+        if (doesLayoutLoop())
+        {
+            count++;
         }
     }
+
     return count;
 }
 
@@ -268,10 +290,12 @@ bool GuardTracker::doesLayoutLoop()
         cycle_count++;
         if (cycle_count > MAX_CYCLE_COUNT)
         {
+            std::cout << "MAX CYCLE COUNT REACHED" << std::endl;
             logMap();
             return true;
         }
     }
+    std::cout << "Found to be non-looping after " << cycle_count << " iterations." << std::endl;
     return false;
 }
 
@@ -287,7 +311,7 @@ void GuardTracker::execute()
 
 int main()
 {
-    std::string filename = "test_input.txt";
+    std::string filename = "full_input.txt";
 
     GuardTracker guard_tracker;
     guard_tracker.readMapFromFile(filename);
