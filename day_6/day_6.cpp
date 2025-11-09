@@ -17,6 +17,7 @@ public:
     void logMap();
     void execute();
     int countVisitedLocations();
+    int countLoopingLayouts(std::string);
 
 private:
     GuardPosition findNextGuardPosition();
@@ -24,6 +25,7 @@ private:
     void findGuardLocation();
     bool updateGuardLocation();
     char rotateGuard(char);
+    bool doesLayoutLoop();
 
     std::vector<std::vector<char>> map;
 
@@ -191,6 +193,45 @@ int GuardTracker::countVisitedLocations()
     return count;
 }
 
+int GuardTracker::countLoopingLayouts(std::string filename)
+{
+    int count = 0;
+    for (int row = 0; row < map.size(); row++)
+    {
+        for (int col = 0; col < map[row].size(); col++)
+        {
+            readMapFromFile(filename);
+            if (map[row][col] != EMPTY)
+            {
+                continue;
+            }
+            map[row][col] = OBSTRUCTION;
+            if (doesLayoutLoop())
+            {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+bool GuardTracker::doesLayoutLoop()
+{
+    const int MAX_CYCLE_COUNT = 10000;
+    int cycle_count = 0;
+
+    while (updateGuardLocation())
+    {
+        cycle_count++;
+        if (cycle_count > MAX_CYCLE_COUNT)
+        {
+            logMap();
+            return true;
+        }
+    }
+    return false;
+}
+
 void GuardTracker::execute()
 {
     while (updateGuardLocation())
@@ -202,10 +243,15 @@ void GuardTracker::execute()
 
 int main()
 {
+    std::string filename = "full_input.txt";
+
     GuardTracker guard_tracker;
-    guard_tracker.readMapFromFile("full_input.txt");
+    guard_tracker.readMapFromFile(filename);
     guard_tracker.logMap();
     guard_tracker.execute();
 
     std::cout << "Guard Visited " << guard_tracker.countVisitedLocations() << " Locations." << std::endl;
+
+    int looping_layouts = guard_tracker.countLoopingLayouts(filename);
+    std::cout << "Number of looping layouts: " << looping_layouts << std::endl;
 }
