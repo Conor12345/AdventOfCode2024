@@ -157,48 +157,33 @@ int sumValidMiddlePages(InstructionData data)
     return sum;
 }
 
-std::vector<int> updatePageListToComply(std::vector<int> list, PageRule rule)
+struct PageSort
 {
-    std::vector<int> page_list = list;
-    std::vector<int>::iterator first_location = std::find(page_list.begin(), page_list.end(), rule.first);
-    std::vector<int>::iterator second_location = std::find(page_list.begin(), page_list.end(), rule.second);
-
-    int first_item = *first_location;
-    std::vector<int> moving_items;
-    for (auto location = second_location; location < first_location; location++)
+    PageSort(std::vector<PageRule> page_rules) { this->page_rules = page_rules; }
+    bool operator()(int a, int b)
     {
-        moving_items.push_back(*location);
+        for (PageRule rule : page_rules)
+        {
+            if (rule.first == a && rule.second == b)
+            {
+                return true;
+            }
+            else if (rule.first == b && rule.second == a)
+            {
+                return false;
+            }
+        }
+        return false;
     }
-
-    *second_location = first_item;
-
-    for (int item_num = 0; item_num < moving_items.size(); item_num++)
-    {
-        *(second_location + item_num) = moving_items[item_num];
-    }
-
-    std::cout << "Before: ";
-    logPageList(list);
-    std::cout << std::endl
-              << "After: ";
-    logPageList(page_list);
-    std::cout << std::endl
-              << std::endl;
-
-    return page_list;
-}
+    std::vector<PageRule> page_rules;
+};
 
 std::vector<int> reorderPageListByRules(std::vector<int> page_list, std::vector<PageRule> page_rules)
 {
-    std::vector<int> current_list = page_list;
-    for (PageRule rule : page_rules)
-    {
-        if (!isPageRuleFollowed(page_list, rule))
-        {
-            current_list = updatePageListToComply(current_list, rule);
-        }
-    }
-    return current_list;
+    std::vector<int> sorted_list = page_list;
+    std::sort(sorted_list.begin(), sorted_list.end(), PageSort(page_rules));
+
+    return sorted_list;
 }
 
 int sumReorderedInvalidMiddlePages(InstructionData data)
@@ -232,7 +217,7 @@ int sumReorderedInvalidMiddlePages(InstructionData data)
 
 int main()
 {
-    InstructionData complete_instructions = readInstructionsFromFile("test_input.txt");
+    InstructionData complete_instructions = readInstructionsFromFile("full_input.txt");
 
     logInstructionData(complete_instructions);
 
