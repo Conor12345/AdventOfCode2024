@@ -110,6 +110,66 @@ char isEquationPossible(Equation eq)
     return false;
 }
 
+long int concatenate(long int num1, long int num2)
+{
+    std::string num3;
+    num3.append(std::to_string(num1));
+    num3.append(std::to_string(num2));
+
+    return stol(num3);
+}
+
+char isEquationPossibleTwo(Equation eq)
+{
+    if (eq.values.size() == 2)
+    {
+        if (eq.values[0] + eq.values[1] == eq.total)
+        {
+            operators.push_back('+');
+            return true;
+        }
+        if (eq.values[0] * eq.values[1] == eq.total)
+        {
+            operators.push_back('*');
+            return true;
+        }
+        if (concatenate(eq.values[0], eq.values[1]) == eq.total)
+        {
+            operators.push_back('|');
+            return true;
+        }
+        return false;
+    }
+    // Take the first two items
+    // Add them together in slot 1, send to isEquation possible
+    // Multiply them together in slot, send to isEquation possible
+    Equation new_eq = eq;
+    new_eq.values[1] = eq.values[0] + eq.values[1];
+    new_eq.values.erase(new_eq.values.begin());
+    if (isEquationPossibleTwo(new_eq))
+    {
+        operators.push_back('+');
+        return true;
+    }
+    new_eq.values = eq.values;
+    new_eq.values[1] = eq.values[0] * eq.values[1];
+    new_eq.values.erase(new_eq.values.begin());
+    if (isEquationPossibleTwo(new_eq))
+    {
+        operators.push_back('*');
+        return true;
+    }
+    new_eq.values = eq.values;
+    new_eq.values[1] = concatenate(eq.values[0], eq.values[1]);
+    new_eq.values.erase(new_eq.values.begin());
+    if (isEquationPossibleTwo(new_eq))
+    {
+        operators.push_back('|');
+        return true;
+    }
+    return false;
+}
+
 int main()
 {
     std::vector<Equation> equation_list = readEquationsFromFile("full_input.txt");
@@ -123,6 +183,34 @@ int main()
         std::cout << "Start: ";
         logEquation(eq);
         bool result = isEquationPossible(eq);
+        if (result)
+        {
+            running_total += eq.total;
+        }
+
+        for (char letter : operators)
+        {
+            std::cout << letter << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << result << "\t" << running_total << std::endl;
+    }
+
+    std::cout << std::endl
+              << "Total: " << running_total << std::endl;
+
+    std::cout << std::endl
+              << "Part 2" << std::endl
+              << std::endl;
+
+    running_total = 0;
+    for (Equation eq : equation_list)
+    {
+        operators.clear();
+        std::cout << "Start: ";
+        logEquation(eq);
+        bool result = isEquationPossibleTwo(eq);
         if (result)
         {
             running_total += eq.total;
