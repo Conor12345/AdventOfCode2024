@@ -10,6 +10,20 @@ struct Coord
     int col;
 };
 
+bool operator==(const Coord &lhs, const Coord &rhs)
+{
+    if (lhs.row != rhs.row)
+    {
+        return false;
+    }
+    if (lhs.col != rhs.col)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 struct EmitterLocations
 {
     char type;
@@ -30,6 +44,8 @@ public:
     int countAntiNodes();
     void logEmitterLocationMap();
     std::map<char, EmitterLocations> findEmitterLocations();
+    std::vector<Coord> findAntiNodeLocations(Coord, Coord);
+    bool isCoordInRange(Coord);
 
 private:
     std::vector<std::vector<MapItem>> map;
@@ -73,7 +89,7 @@ void AntennaMapper::logMap()
         {
             if (item.isAntinode)
             {
-                std::cout << "\e[1m" << item.map_item << "\e[0m";
+                std::cout << "\e[1m" << 'x' << "\e[0m";
             }
             else
             {
@@ -122,6 +138,65 @@ std::map<char, EmitterLocations> AntennaMapper::findEmitterLocations()
     return location_map;
 }
 
+std::vector<Coord> AntennaMapper::findAntiNodeLocations(Coord a, Coord b)
+{
+
+    int row_diff = abs(a.row - b.row);
+    int col_diff = abs(a.col - b.col);
+
+    if (a.row > b.row)
+    {
+        // b .
+        // . a
+        if (a.col > b.col)
+        {
+            return {{a.row + row_diff, a.col + col_diff}, {b.row - row_diff, b.col - col_diff}};
+        }
+        // . b
+        // a .
+        else // (a.col < b.col)
+        {
+            return {{a.row + row_diff, a.col - col_diff}, {b.row - row_diff, b.col + col_diff}};
+        }
+    }
+    else // (a.row < b.row)
+    {
+        // . a
+        // b .
+        if (a.col > b.col)
+        {
+            return {{a.row - row_diff, a.col + col_diff}, {b.row + row_diff, b.col - col_diff}};
+        }
+        // a .
+        // . b
+        else // (a.col < b.col)
+        {
+            return {{a.row - row_diff, a.col - col_diff}, {b.row + row_diff, b.col + col_diff}};
+        }
+    }
+}
+
+bool AntennaMapper::isCoordInRange(Coord coord)
+{
+    if (coord.row < 0)
+    {
+        return false;
+    }
+    if (coord.row >= map.size())
+    {
+        return false;
+    }
+    if (coord.col < 0)
+    {
+        return false;
+    }
+    if (coord.row >= map[0].size())
+    {
+        return false;
+    }
+    return true;
+}
+
 int AntennaMapper::countAntiNodes()
 {
     int count = 0;
@@ -129,12 +204,44 @@ int AntennaMapper::countAntiNodes()
     emitter_location_map = findEmitterLocations();
     logEmitterLocationMap();
 
+    for (auto emitter_type : emitter_location_map)
+    {
+        if (emitter_type.second.locations.size() == 1)
+        {
+            continue;
+        }
+        for (auto first_loc : emitter_type.second.locations)
+        {
+            for (auto second_loc : emitter_type.second.locations)
+            {
+                if (first_loc == second_loc)
+                {
+                    continue;
+                }
+
+                std::vector<Coord> antinode_locations = findAntiNodeLocations(first_loc, second_loc);
+                for (Coord antinode : antinode_locations)
+                {
+                    if (isCoordInRange(antinode))
+                    {
+                        if (!map[antinode.row][antinode.col].isAntinode)
+                        {
+                            map[antinode.row][antinode.col].isAntinode = true;
+                            count++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    logMap();
+
     return count;
 }
 
 int main()
 {
     AntennaMapper mapper;
-    mapper.readMapFromFile("test_input.txt");
-    mapper.countAntiNodes();
+    mapper.readMapFromFile("full_input.txt");
+    std::cout << mapper.countAntiNodes() << std::endl;
 }
