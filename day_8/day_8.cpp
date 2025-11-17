@@ -190,7 +190,7 @@ bool AntennaMapper::isCoordInRange(Coord coord)
     {
         return false;
     }
-    if (coord.row >= map[0].size())
+    if (coord.col >= map[0].size())
     {
         return false;
     }
@@ -206,6 +206,7 @@ int AntennaMapper::countAntiNodes()
 
     for (auto emitter_type : emitter_location_map)
     {
+        std::cout << emitter_type.first << std::endl;
         if (emitter_type.second.locations.size() == 1)
         {
             continue;
@@ -234,6 +235,7 @@ int AntennaMapper::countAntiNodes()
             }
         }
     }
+
     logMap();
 
     return count;
