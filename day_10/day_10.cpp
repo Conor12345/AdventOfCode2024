@@ -3,6 +3,8 @@
 #include <fstream>
 #include <vector>
 
+bool PART_2 = true;
+
 struct Location
 {
     int value;
@@ -107,7 +109,7 @@ int TrailheadCalculator::countTrails(int row, int col)
     std::cout << row << "\t" << col << "\t" << map.at(row).at(col).value << "\n";
     if (map.at(row).at(col).value == 9)
     {
-        if (map.at(row).at(col).trail_found)
+        if (map.at(row).at(col).trail_found && !PART_2)
         {
             std::cout << "BASE CASE SKIP" << "\n";
             return 0;
