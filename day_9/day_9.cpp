@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <tuple>
 
 struct Location
 {
@@ -134,13 +135,114 @@ long long calculateCheckSum(std::vector<Location> disk_map)
     long long total = 0;
     for (int loc = 0; loc < disk_map.size(); loc++)
     {
-        if (!disk_map.at(loc).isFile)
+        if (disk_map.at(loc).isFile)
         {
-            return total;
+            total += loc * disk_map.at(loc).id;
         }
-        total += loc * disk_map.at(loc).id;
     }
-    return -1;
+    return total;
+}
+
+int findMaxID(std::vector<Location> disk_map)
+{
+    int max = 0;
+    for (Location item : disk_map)
+    {
+        if (item.id > max)
+        {
+            max = item.id;
+        }
+    }
+    return max;
+}
+
+std::tuple<int, int> findIDStartStop(std::vector<Location> disk_map, int target_id)
+{
+    int first = 0;
+    for (int i = 0; i < disk_map.size(); i++)
+    {
+        if (disk_map.at(i).id == target_id)
+        {
+            first = i;
+            break;
+        }
+    }
+
+    int second = first;
+    while (second + 1 < disk_map.size())
+    {
+        if (disk_map.at(second + 1).id == target_id)
+        {
+            second++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return {first, second};
+}
+
+std::tuple<int, int> findSpaceWithLengthBeforeIndex(std::vector<Location> disk_map, int length, int index_limit)
+{
+    int first_space = findFirstSpace(disk_map);
+    int space_start = first_space;
+    for (int i = first_space; i < index_limit; i++)
+    {
+        if (disk_map.at(i).isFile)
+        {
+            space_start = -1;
+        }
+        else
+        {
+            if (space_start == -1)
+            {
+                space_start = i;
+            }
+            if (i - space_start + 1 >= length)
+            {
+                return {space_start, i};
+            }
+        }
+    }
+    return {-1, -1};
+}
+
+std::vector<Location> contiguousCompressDiskMap(std::vector<Location> disk_map)
+{
+    // logLocationVector(disk_map);
+    int current_id = findMaxID(disk_map);
+    std::cout << "Max ID: " << current_id << std::endl;
+    for (current_id; current_id > 0; current_id--)
+    {
+        std::tuple<int, int> start_stop = findIDStartStop(disk_map, current_id);
+        int start = std::get<0>(start_stop);
+        int stop = std::get<1>(start_stop);
+        int block_length = stop - start + 1;
+
+        std::cout << current_id << "\t" << start << "\t" << stop << "\t" << block_length << "\t";
+
+        std::tuple<int, int> space_start_stop = findSpaceWithLengthBeforeIndex(disk_map, block_length, start);
+        std::cout << std::get<0>(space_start_stop) << "\t" << std::get<1>(space_start_stop)
+                  << std::endl
+                  << std::endl;
+
+        int space_start = std::get<0>(space_start_stop);
+        int space_stop = std::get<1>(space_start_stop);
+        if (space_start == -1)
+        {
+            continue;
+        }
+
+        for (int i = 0; i < block_length; i++)
+        {
+            disk_map.at(space_start + i) = disk_map.at(start + i);
+            disk_map.at(start + i).id = -1;
+            disk_map.at(start + i).isFile = false;
+        }
+        // logLocationVector(disk_map);
+    }
+    return disk_map;
 }
 
 int main()
@@ -152,4 +254,7 @@ int main()
     std::vector<Location> compressed_map = compressDiskMap(expanded_map);
     logLocationVector(compressed_map);
     std::cout << "Checksum " << calculateCheckSum(compressed_map) << std::endl;
+    std::vector<Location> contiguous_compressed_map = contiguousCompressDiskMap(expanded_map);
+    logLocationVector(contiguous_compressed_map);
+    std::cout << "Checksum 2 " << calculateCheckSum(contiguous_compressed_map) << std::endl;
 }
