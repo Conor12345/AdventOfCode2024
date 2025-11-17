@@ -3,7 +3,7 @@
 #include <fstream>
 #include <vector>
 
-bool PART_2 = true;
+bool PART_2 = false;
 
 struct Location
 {
@@ -172,6 +172,12 @@ int TrailheadCalculator::sumMapTrailheadScores()
 int main()
 {
     TrailheadCalculator calc;
+    calc.readMapFromFile("full_input.txt");
+    calc.logMap();
+    std::cout << calc.sumMapTrailheadScores() << std::endl;
+
+    PART_2 = true;
+
     calc.readMapFromFile("full_input.txt");
     calc.logMap();
     std::cout << calc.sumMapTrailheadScores() << std::endl;
