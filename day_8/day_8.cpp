@@ -42,9 +42,11 @@ public:
     void readMapFromFile(std::string);
     void logMap();
     int countAntiNodes();
+    int countHarmonicAntiNodes();
     void logEmitterLocationMap();
     std::map<char, EmitterLocations> findEmitterLocations();
     std::vector<Coord> findAntiNodeLocations(Coord, Coord);
+    std::vector<Coord> findHarmonicAntiNodeLocations(Coord, Coord);
     bool isCoordInRange(Coord);
 
 private:
@@ -176,6 +178,76 @@ std::vector<Coord> AntennaMapper::findAntiNodeLocations(Coord a, Coord b)
     }
 }
 
+std::vector<Coord> AntennaMapper::findHarmonicAntiNodeLocations(Coord a, Coord b)
+{
+
+    int row_diff = abs(a.row - b.row);
+    int col_diff = abs(a.col - b.col);
+
+    if (a.row > b.row)
+    {
+        // b .
+        // . a
+        if (a.col > b.col)
+        {
+            std::vector<Coord> anti_nodes = {{a.row + row_diff, a.col + col_diff}, {b.row - row_diff, b.col - col_diff}};
+            int mult = 1;
+            while (isCoordInRange(anti_nodes.at(anti_nodes.size() - 1)) || isCoordInRange(anti_nodes.at(anti_nodes.size() - 2)))
+            {
+                mult++;
+                anti_nodes.push_back({a.row + mult * row_diff, a.col + mult * col_diff});
+                anti_nodes.push_back({b.row - mult * row_diff, b.col - mult * col_diff});
+            }
+            return anti_nodes;
+        }
+        // . b
+        // a .
+        else // (a.col < b.col)
+        {
+            std::vector<Coord> anti_nodes = {{a.row + row_diff, a.col - col_diff}, {b.row - row_diff, b.col + col_diff}};
+            int mult = 1;
+            while (isCoordInRange(anti_nodes.at(anti_nodes.size() - 1)) || isCoordInRange(anti_nodes.at(anti_nodes.size() - 2)))
+            {
+                mult++;
+                anti_nodes.push_back({a.row + mult * row_diff, a.col - mult * col_diff});
+                anti_nodes.push_back({b.row - mult * row_diff, b.col + mult * col_diff});
+            }
+            return anti_nodes;
+        }
+    }
+    else // (a.row < b.row)
+    {
+        // . a
+        // b .
+        if (a.col > b.col)
+        {
+            std::vector<Coord> anti_nodes = {{a.row - row_diff, a.col + col_diff}, {b.row + row_diff, b.col - col_diff}};
+            int mult = 1;
+            while (isCoordInRange(anti_nodes.at(anti_nodes.size() - 1)) || isCoordInRange(anti_nodes.at(anti_nodes.size() - 2)))
+            {
+                mult++;
+                anti_nodes.push_back({a.row - mult * row_diff, a.col + mult * col_diff});
+                anti_nodes.push_back({b.row + mult * row_diff, b.col - mult * col_diff});
+            }
+            return anti_nodes;
+        }
+        // a .
+        // . b
+        else // (a.col < b.col)
+        {
+            std::vector<Coord> anti_nodes = {{a.row - row_diff, a.col - col_diff}, {b.row + row_diff, b.col + col_diff}};
+            int mult = 1;
+            while (isCoordInRange(anti_nodes.at(anti_nodes.size() - 1)) || isCoordInRange(anti_nodes.at(anti_nodes.size() - 2)))
+            {
+                mult++;
+                anti_nodes.push_back({a.row - mult * row_diff, a.col - mult * col_diff});
+                anti_nodes.push_back({b.row + mult * row_diff, b.col + mult * col_diff});
+            }
+            return anti_nodes;
+        }
+    }
+}
+
 bool AntennaMapper::isCoordInRange(Coord coord)
 {
     if (coord.row < 0)
@@ -241,9 +313,73 @@ int AntennaMapper::countAntiNodes()
     return count;
 }
 
+int AntennaMapper::countHarmonicAntiNodes()
+{
+    int count = 0;
+    logMap();
+    emitter_location_map = findEmitterLocations();
+    logEmitterLocationMap();
+
+    for (auto emitter_type : emitter_location_map)
+    {
+        std::cout << emitter_type.first << std::endl;
+        if (emitter_type.second.locations.size() == 1)
+        {
+            continue;
+        }
+
+        // Automatically make all nodes anti-nodes
+        for (auto loc : emitter_type.second.locations)
+        {
+            if (isCoordInRange(loc))
+            {
+                if (!map[loc.row][loc.col].isAntinode)
+                {
+                    map[loc.row][loc.col].isAntinode = true;
+                    count++;
+                }
+            }
+        }
+
+        for (auto first_loc : emitter_type.second.locations)
+        {
+            for (auto second_loc : emitter_type.second.locations)
+            {
+                if (first_loc == second_loc)
+                {
+                    continue;
+                }
+
+                std::vector<Coord> antinode_locations = findHarmonicAntiNodeLocations(first_loc, second_loc);
+                for (Coord antinode : antinode_locations)
+                {
+                    if (isCoordInRange(antinode))
+                    {
+                        if (!map[antinode.row][antinode.col].isAntinode)
+                        {
+                            map[antinode.row][antinode.col].isAntinode = true;
+                            count++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    logMap();
+
+    return count;
+}
+
 int main()
 {
+    std::string filename = "full_input.txt";
+
     AntennaMapper mapper;
-    mapper.readMapFromFile("full_input.txt");
+    mapper.readMapFromFile(filename);
     std::cout << mapper.countAntiNodes() << std::endl;
+
+    AntennaMapper mapper2;
+    mapper2.readMapFromFile(filename);
+    std::cout << mapper2.countHarmonicAntiNodes() << std::endl;
 }
