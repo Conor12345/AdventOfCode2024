@@ -93,9 +93,9 @@ void PebbleTracker::executeNBlinks(int n)
     logPebbleList();
     for (auto i = 0; i < n; i++)
     {
-        std::cout << i + 1 << "/" << n << "\t";
+        std::cout << i + 1 << "/" << n << "\n";
         executeBlink();
-        logPebbleList();
+        // logPebbleList();
     }
     std::cout << "Pebble count: " << pebble_list.size() << "\n";
 }
